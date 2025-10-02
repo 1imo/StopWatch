@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - "v*"
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run unit tests
+        run: dotnet test tests/Stopwatch.Unit/Stopwatch.Unit.csproj --no-build --configuration Release --verbosity normal
+
+      - name: Run integration tests
+        run: dotnet test tests/Stopwatch.Integration/Stopwatch.Integration.csproj --no-build --configuration Release --verbosity normal
+
+      - name: Run E2E tests
+        run: dotnet test tests/Stopwatch.E2E/Stopwatch.E2E.csproj --no-build --configuration Release --verbosity normal
+
+  publish:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    strategy:
+      matrix:
+        runtime: [win-x64, linux-x64, osx-x64, osx-arm64]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Publish ${{ matrix.runtime }}
+        run: dotnet publish src/Stopwatch.Cli/Stopwatch.Cli.csproj -c Release -r ${{ matrix.runtime }} --self-contained true -p:PublishSingleFile=true -o ./publish/${{ matrix.runtime }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: stopwatch-${{ matrix.runtime }}
+          path: ./publish/${{ matrix.runtime }}/*
+
+  release:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Publish win-x64
+        run: dotnet publish src/Stopwatch.Cli/Stopwatch.Cli.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/win-x64
+
+      - name: Publish linux-x64
+        run: dotnet publish src/Stopwatch.Cli/Stopwatch.Cli.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/linux-x64
+
+      - name: Publish osx-x64
+        run: dotnet publish src/Stopwatch.Cli/Stopwatch.Cli.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/osx-x64
+
+      - name: Publish osx-arm64
+        run: dotnet publish src/Stopwatch.Cli/Stopwatch.Cli.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true -o ./publish/osx-arm64
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ./publish/win-x64/stopwatch.exe
+            ./publish/linux-x64/stopwatch
+            ./publish/osx-x64/stopwatch
+            ./publish/osx-arm64/stopwatch
+          generate_release_notes: true
+          draft: false
+          prerelease: false

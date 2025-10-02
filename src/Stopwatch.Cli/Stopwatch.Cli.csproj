@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>stopwatch</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Stopwatch.App\Stopwatch.App.csproj" />
+    <ProjectReference Include="..\Stopwatch.Domain\Stopwatch.Domain.csproj" />
+    <ProjectReference Include="..\Stopwatch.Ports\Stopwatch.Ports.csproj" />
+    <ProjectReference Include="..\Stopwatch.Adapters.FileSystem\Stopwatch.Adapters.FileSystem.csproj" />
+    <ProjectReference Include="..\Stopwatch.Adapters.Console\Stopwatch.Adapters.Console.csproj" />
+    <ProjectReference Include="..\Stopwatch.Adapters.Singleton\Stopwatch.Adapters.Singleton.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>
+
+
