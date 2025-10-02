@@ -35,7 +35,19 @@ public sealed class EndToEndTests : IDisposable
             throw new FileNotFoundException($"CLI executable not found at {cliPath}. Build the project first.");
         }
 
-        var process = CreateProcess(cliPath);
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = cliPath,
+                UseShellExecute = false,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            }
+        };
+        
         process.Start();
 
         await Task.Delay(2000);
@@ -43,10 +55,9 @@ public sealed class EndToEndTests : IDisposable
         process.Kill();
         await process.WaitForExitAsync();
 
-        var dataFile = GetDataFilePath();
-        var dataDir = Path.GetDirectoryName(dataFile);
+        var expectedDir = GetRealDataDirectory();
         
-        Assert.True(Directory.Exists(dataDir), $"Data directory not found at {dataDir}");
+        Assert.True(Directory.Exists(expectedDir), $"Data directory not found at {expectedDir}");
     }
 
     [Fact]
@@ -205,6 +216,25 @@ public sealed class EndToEndTests : IDisposable
         }
 
         throw new InvalidOperationException("Solution root not found");
+    }
+
+    private static string GetRealDataDirectory()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            return Path.Combine(appData, "PersistentStopwatch");
+        }
+        else if (OperatingSystem.IsMacOS())
+        {
+            var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            return Path.Combine(home, "Library", "Application Support", "PersistentStopwatch");
+        }
+        else
+        {
+            var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            return Path.Combine(home, ".local", "share", "PersistentStopwatch");
+        }
     }
 }
 
