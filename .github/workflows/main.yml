@@ -95,14 +95,20 @@ jobs:
       - name: Publish osx-arm64
         run: dotnet publish src/Stopwatch.Cli/Stopwatch.Cli.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true -o ./publish/osx-arm64
 
+      - name: Rename binaries
+        run: |
+          mv ./publish/linux-x64/stopwatch ./publish/linux-x64/stopwatch-linux-x64
+          mv ./publish/osx-x64/stopwatch ./publish/osx-x64/stopwatch-macos-x64
+          mv ./publish/osx-arm64/stopwatch ./publish/osx-arm64/stopwatch-macos-arm64
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
             ./publish/win-x64/stopwatch.exe
-            ./publish/linux-x64/stopwatch
-            ./publish/osx-x64/stopwatch
-            ./publish/osx-arm64/stopwatch
+            ./publish/linux-x64/stopwatch-linux-x64
+            ./publish/osx-x64/stopwatch-macos-x64
+            ./publish/osx-arm64/stopwatch-macos-arm64
           generate_release_notes: true
           draft: false
           prerelease: false
