@@ -79,7 +79,7 @@ public sealed class EndToEndTests : IDisposable
             await process2.WaitForExitAsync();
         }
 
-        Assert.True(hasExited, "Second instance should have exited because first instance holds the lock");
+        Assert.True(hasExited, "Second instance should have exited because first holds the lock");
     }
 
     [Fact]
