@@ -146,16 +146,32 @@ public sealed class EndToEndTests : IDisposable
     private string GetCliExecutablePath()
     {
         var solutionRoot = GetSolutionRoot();
-        var configuration = "Debug";
+        
+        var configuration = Environment.GetEnvironmentVariable("CONFIGURATION") ?? "Debug";
+        
+        if (!new[] { "Debug", "Release" }.Contains(configuration))
+        {
+            configuration = "Debug";
+        }
 
+        string executableName;
         if (OperatingSystem.IsWindows())
         {
-            return Path.Combine(solutionRoot, "src", "Stopwatch.Cli", "bin", configuration, "net8.0", "stopwatch.exe");
+            executableName = "stopwatch.exe";
         }
         else
         {
-            return Path.Combine(solutionRoot, "src", "Stopwatch.Cli", "bin", configuration, "net8.0", "stopwatch");
+            executableName = "stopwatch";
         }
+
+        var path = Path.Combine(solutionRoot, "src", "Stopwatch.Cli", "bin", configuration, "net8.0", executableName);
+        
+        if (!File.Exists(path) && configuration == "Debug")
+        {
+            path = Path.Combine(solutionRoot, "src", "Stopwatch.Cli", "bin", "Release", "net8.0", executableName);
+        }
+        
+        return path;
     }
 
     private string GetDataFilePath()

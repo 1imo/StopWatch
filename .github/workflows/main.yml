@@ -38,6 +38,8 @@ jobs:
 
       - name: Run E2E tests
         run: dotnet test tests/Stopwatch.E2E/Stopwatch.E2E.csproj --no-build --configuration Release --verbosity normal
+        env:
+          CONFIGURATION: Release
 
   publish:
     needs: build-and-test
